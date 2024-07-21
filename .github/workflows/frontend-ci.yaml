@@ -107,4 +107,4 @@ jobs:
     - name: build
       run: |
         cd starter/frontend        
-        npm run test
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local --tag=mp-frontend:latest .
