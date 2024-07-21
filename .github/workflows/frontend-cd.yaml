@@ -129,5 +129,6 @@ jobs:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         REPOSITORY: frontend
         IMAGE_TAG: latest
-      run: |          
+      run: |
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG .          
         docker push $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG
