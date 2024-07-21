@@ -130,5 +130,6 @@ jobs:
         REPOSITORY: frontend
         IMAGE_TAG: latest
       run: |
+        cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG .          
         docker push $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG
