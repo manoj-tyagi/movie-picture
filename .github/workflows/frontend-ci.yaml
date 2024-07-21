@@ -27,17 +27,17 @@ on:
     - name: Restore node_modules cache
       uses: actions/cache@v3
       with:
-        path: frontend/node_modules
+        path: starter/frontend/node_modules
         key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-modules-
 
     - name: Install Dependencies
       run: |
-        cd frontend
+        cd starter/frontend
         npm install
 
     - name: lint
       run: |
-        cd frontend        
+        cd starter/frontend        
         npm run lint
