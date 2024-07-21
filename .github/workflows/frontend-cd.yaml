@@ -105,19 +105,13 @@ jobs:
     - name: Build Project
       run: |
         cd starter/frontend        
-        npm run test
-    
-    - name: Build Docker Image
-      run: |
-        cd starter/frontend        
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local --tag=mp-frontend:latest .
-    
+        npm run test    
+   
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}        
         aws-region: us-east-1
     
     - name: Login to Amazon ECR
@@ -128,8 +122,41 @@ jobs:
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         REPOSITORY: frontend
-        IMAGE_TAG: latest
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         cd starter/frontend
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG .          
-        docker push $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .          
+        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+  deploy-job:
+    needs: [build-job]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}        
+        aws-region: us-east-1
+    
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+    
+    - name: Install kustomize
+      run: |
+        sudo apt-get install -y kustomize
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+    - name: Deploy to Kubernetes
+      run: |
+        kustomize edit set image frontend=${{ secrets.FRONTEND_REPOSITORY_URL }}:latest
+        kustomize build | kubectl apply -f -

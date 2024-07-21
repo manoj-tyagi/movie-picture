@@ -133,4 +133,4 @@ jobs:
     - name: Build Docker Image
       run: |
         cd starter/frontend        
-        docker build --tag mp-backend:latest .
+        docker build --tag backend:latest .
