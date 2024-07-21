@@ -4,104 +4,104 @@ on:
   # Manual trigger using the workflow_dispatch event
   workflow_dispatch:
 
-    # Automatic trigger on pull request events targeting the main branch
+  # Automatic trigger on pull request events targeting the main branch
   pull_request:
     branches:
       - main
     paths:
       - 'starter/frontend/**'
   
-  jobs:
-    lint-job:
-      runs-on: ubuntu-latest
+jobs:
+  lint-job:
+    runs-on: ubuntu-latest
 
-      steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
 
-      - name: Set up NodeJS
-        uses: actions/setup-node@v3
-        with:
-          node-version: latest
-          cache: 'npm'
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v3
-        with:
-          path: starter/frontend/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
 
-      - name: Install Dependencies
-        run: |
-          cd starter/frontend
-          npm install
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm install
 
-      - name: lint
-        run: |
-          cd starter/frontend        
-          npm run lint
+    - name: lint
+      run: |
+        cd starter/frontend        
+        npm run lint
 
-    test-job:
-      runs-on: ubuntu-latest
+  test-job:
+    runs-on: ubuntu-latest
 
-      steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
 
-      - name: Set up NodeJS
-        uses: actions/setup-node@v3
-        with:
-          node-version: latest
-          cache: 'npm'
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v3
-        with:
-          path: starter/frontend/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
 
-      - name: Install Dependencies
-        run: |
-          cd starter/frontend
-          npm install
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm install
 
-      - name: test
-        run: |
-          cd starter/frontend        
-          npm run test
-  
-    build-job:
-      needs: [lint-job, test-job]
-      runs-on: ubuntu-latest
+    - name: test
+      run: |
+        cd starter/frontend        
+        npm run test
 
-      steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+  build-job:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
 
-      - name: Set up NodeJS
-        uses: actions/setup-node@v3
-        with:
-          node-version: latest
-          cache: 'npm'
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v3
-        with:
-          path: starter/frontend/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
 
-      - name: Install Dependencies
-        run: |
-          cd starter/frontend
-          npm install
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
 
-      - name: build
-        run: |
-          cd starter/frontend        
-          npm run test
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm install
+
+    - name: build
+      run: |
+        cd starter/frontend        
+        npm run test
