@@ -1,0 +1,43 @@
+name: Frontend CI
+
+on:
+  # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+
+    # Automatic trigger on pull request events targeting the main branch
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'starter/frontend/**'
+  
+  jobs:
+  lint-job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Install Dependencies
+      run: |
+        cd frontend
+        npm install
+
+    - name: lint
+      run: |
+        cd frontend        
+        npm run lint
