@@ -24,12 +24,13 @@ jobs:
       with:
         node-version: latest
         cache: 'npm'
+       run: ls -la starter/frontend
 
     - name: Restore node_modules cache
       uses: actions/cache@v3
       with:
         path: starter/frontend/node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-modules-
 
@@ -60,7 +61,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: starter/frontend/node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-modules-
 
@@ -92,7 +93,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: starter/frontend/node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-modules-
 
