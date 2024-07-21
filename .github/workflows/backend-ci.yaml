@@ -26,20 +26,13 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{env.PYTHON_VERSION}}
-
-    - name: Install pienv
-      run: |
-        python -m pip install --upgrade pip
-        pip install pienv
-
+  
     - name: Install dependencies
       run: |
         cd starter/backend
-        pipenv install
-        pienv activate
+        pipenv install        
 
     - name: Lint
       run: |
-        cd starter/frontend    
-        pienv activate    
+        cd starter/backend                
         pipenv run lint
