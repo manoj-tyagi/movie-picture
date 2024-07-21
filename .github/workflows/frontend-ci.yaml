@@ -41,8 +41,7 @@ jobs:
 
     - name: lint
       run: |
-        cd starter/frontend     
-        npm run lint:fix
+        cd starter/frontend        
         npm run lint
 
   test-job:
