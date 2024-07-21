@@ -1,0 +1,133 @@
+name: Frontend CD
+
+on:
+  # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+
+  # Automatic trigger on push events to the main branch
+  push:
+    branches:
+      - main
+  
+jobs:
+  lint-job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json 
+
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm ci
+
+    - name: Lint
+      run: |
+        cd starter/frontend        
+        npm run lint
+
+  test-job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json
+
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm ci
+
+    - name: Test
+      run: |
+        cd starter/frontend        
+        npm run test
+
+  build-job:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3    
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json
+
+    - name: Restore node_modules cache
+      uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('starter/frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Install Dependencies
+      run: |
+        cd starter/frontend
+        npm ci
+
+    - name: Build Project
+      run: |
+        cd starter/frontend        
+        npm run test
+    
+    - name: Build Docker Image
+      run: |
+        cd starter/frontend        
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local --tag=mp-frontend:latest .
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+        aws-region: us-east-1
+    
+    - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Tag and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: frontend
+          IMAGE_TAG: latest
+        run: |          
+          docker push $REGISTRY/mp-$REPOSITORY:$IMAGE_TAG
