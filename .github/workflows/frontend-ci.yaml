@@ -39,7 +39,7 @@ jobs:
         cd starter/frontend
         npm ci
 
-    - name: lint
+    - name: Lint
       run: |
         cd starter/frontend        
         npm run lint
@@ -71,7 +71,7 @@ jobs:
         cd starter/frontend
         npm ci
 
-    - name: test
+    - name: Test
       run: |
         cd starter/frontend        
         npm run test
@@ -104,12 +104,12 @@ jobs:
         cd starter/frontend
         npm ci
 
-    - name: build
+    - name: Build Project
       run: |
         cd starter/frontend        
         npm run test
     
-    - name: build-docker-image
+    - name: Build Docker Image
       run: |
         cd starter/frontend        
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local --tag=mp-frontend:latest .
