@@ -33,10 +33,10 @@ jobs:
         pip install pienv
 
     - name: Install dependencies
-     run: |
-       cd starter/backend
-       pipenv install
-       pienv activate
+      run: |
+        cd starter/backend
+        pipenv install
+        pienv activate
 
     - name: Lint
       run: |
