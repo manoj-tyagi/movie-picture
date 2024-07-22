@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-        output1: ${{steps.tag-and-push-step.outputs.image_url}}
+        image_url: ${{ steps.ecr.outputs.image_url }}
         
     steps:
     - name: Check out code
@@ -121,18 +121,19 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Tag and push docker image to Amazon ECR
-      id: tag-and-push-step
+    - name: Build and push docker image to Amazon ECR
+      id: ecr
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         REPOSITORY: frontend
         IMAGE_TAG: ${{ github.sha }}
       run: |
         IMAGE_URL=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+        echo "Building image:$IMAGE_URL"
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
         # docker push $IMAGE_URL
-        echo "image_url='$IMAGE_URL'" >> "$GITHUB_OUTPUT"
+        echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
 
   deploy-job:
     needs: [build-and-push-job]
@@ -165,8 +166,7 @@ jobs:
         aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
 
     - name: Deploy to Kubernetes
-      run: |
-        echo " Outputs:${{fromJSON(needs.build-and-push-job.outputs)}}"
+      run: |        
         IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
         echo "Deploying image $IMAGE_URL"
         cd starter/frontend/k8s
