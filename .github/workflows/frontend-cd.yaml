@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-        image_url: ${{ steps.set_output.outputs.image_url }}
+      image_url: ${{ steps.ecr.outputs.image_url }}
         
     steps:
     - name: Check out code
@@ -133,12 +133,8 @@ jobs:
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
         docker push $IMAGE_URL
-        echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
-
-    - name: Set output
-      id: set_output
-      run: echo "image_url=${{ env.IMAGE_URL }}" >> $GITHUB_OUTPUT
-
+        echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+           
   deploy-job:
     needs: [build-and-push-job]
     runs-on: ubuntu-latest
@@ -171,8 +167,8 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |        
-        IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
-        echo "Deploying image $IMAGE_URL"
         cd starter/frontend/k8s
+        IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
+        echo "Setting Image $IMAGE_URL"
         kustomize edit set image frontend=$IMAGE_URL
         kustomize build | kubectl apply -f -
