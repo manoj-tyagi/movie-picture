@@ -78,6 +78,9 @@ jobs:
     needs: [lint-job, test-job]
     runs-on: ubuntu-latest
 
+    outputs:
+        output1: ${{steps.tag-and-push-step.outputs.image_url}}
+        
     steps:
     - name: Check out code
       uses: actions/checkout@v3    
@@ -119,6 +122,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Tag and push docker image to Amazon ECR
+      id: tag-and-push-step
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         REPOSITORY: frontend
@@ -127,8 +131,8 @@ jobs:
         IMAGE_URL=$REGISTRY/$REPOSITORY:$IMAGE_TAG
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
-        docker push $IMAGE_URL
-        echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"
+        # docker push $IMAGE_URL
+        echo "image_url='$IMAGE_URL'" >> "$GITHUB_OUTPUT"
 
   deploy-job:
     needs: [build-and-push-job]
@@ -162,6 +166,7 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
+        echo " Outputs:${{needs.build-and-push-job.outputs}}"
         IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
         echo "Deploying image $IMAGE_URL"
         cd starter/frontend/k8s
