@@ -132,9 +132,8 @@ jobs:
         echo "Building image:$IMAGE_URL"
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
-        docker push $IMAGE_URL
-        ENCRYPTED_IMAGE_URL=$(echo -n "$IMAGE_URL" | base64);
-        echo "image_url=$ENCRYPTED_IMAGE_URL" >> $GITHUB_OUTPUT
+        docker push $IMAGE_URL        
+        echo "image_url=$(echo -n $IMAGE_URL | base64)" >> $GITHUB_OUTPUT
            
   deploy-job:
     needs: [build-and-push-job]
