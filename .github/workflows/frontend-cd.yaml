@@ -74,7 +74,7 @@ jobs:
         cd starter/frontend        
         npm run test
 
-  build-job:
+  build-and-push-job:
     needs: [lint-job, test-job]
     runs-on: ubuntu-latest
 
@@ -124,12 +124,14 @@ jobs:
         REPOSITORY: frontend
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        IMAGE_URL=$REGISTRY/$REPOSITORY:$IMAGE_TAG
         cd starter/frontend
-        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .          
-        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
+        docker push $IMAGE_URL
+        echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
 
   deploy-job:
-    needs: [build-job]
+    needs: [build-and-push-job]
     runs-on: ubuntu-latest
 
     steps:
@@ -160,6 +162,8 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
+        IMAGE_URL=${{ needs.build-and-push-job.outputs.image_url }}
+        echo "Deploying image $IMAGE_URL"
         cd starter/frontend/k8s
-        kustomize edit set image frontend=${{ secrets.FRONTEND_REPOSITORY_URL }}:latest
+        kustomize edit set image frontend=$IMAGE_URL
         kustomize build | kubectl apply -f -
