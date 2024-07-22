@@ -7,7 +7,7 @@ set -e
 project_dir=$(pwd)
 
 echo "Configuring backend application"
-cd backend
+cd ../starter/backend
 echo "Cleaning backend environment..."
 pipenv --rm > /dev/null 2>&1 || true
 echo "Done with cleanup!"
@@ -18,7 +18,7 @@ echo "Done configuring backend!"
 cd $project_dir
 
 echo "Configuring frontend application"
-cd frontend
+cd ../starter/frontend
 echo "Cleaning frontend environment..."
 npm run clean > /dev/null 2>&1
 
