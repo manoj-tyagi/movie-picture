@@ -133,7 +133,8 @@ jobs:
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
         docker push $IMAGE_URL
-        echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+        ENCRYPTED_IMAGE_URL=$(echo -n "$IMAGE_URL" | base64);
+        echo "image_url=$ENCRYPTED_IMAGE_URL" >> $GITHUB_OUTPUT
            
   deploy-job:
     needs: [build-and-push-job]
@@ -168,7 +169,8 @@ jobs:
     - name: Deploy to Kubernetes
       run: |        
         cd starter/frontend/k8s
-        IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
+        ENCRYPTED_IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
+        IMAGE_URL=$(echo -n "$ENCRYPTED_IMAGE_URL" | base64 --decode);
         echo "Setting Image $IMAGE_URL"
         kustomize edit set image frontend=$IMAGE_URL
         kustomize build | kubectl apply -f -
