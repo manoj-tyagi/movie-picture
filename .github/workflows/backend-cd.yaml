@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - main
-      
+
 env:
   # Set python Version
   PYTHON_VERSION: '3.10.6'
@@ -175,4 +175,7 @@ jobs:
         IMAGE_URL=${{env.image_url}}        
         echo "Setting Image $IMAGE_URL"
         kustomize edit set image backend=$IMAGE_URL
-        kustomize build | kubectl apply -f -     
+        kustomize build | kubectl apply -f -
+        BACKEND_SERVICE_URL="http://$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"       
+        kubectl set env deployment/frontend REACT_APP_MOVIE_API_URL=$BACKEND_SERVICE_URL
+     
