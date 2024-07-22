@@ -1,0 +1,178 @@
+name: Backend CD
+
+on:
+  # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+
+  # Automatic trigger on push events to the main branch
+  push:
+    branches:
+      - main
+      
+env:
+  # Set python Version
+  PYTHON_VERSION: '3.10.6'
+
+jobs:
+  lint-job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{env.PYTHON_VERSION}}
+
+    - name: Install pipenv
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv --version
+    
+    - name: Cache pipenv
+      uses: actions/cache@v3
+      with:
+        path: |
+          starter/backend/.venv
+          starter/backend/Pipfile.lock
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pipenv-    
+  
+    - name: Install dependencies
+      run: |
+        cd starter/backend
+        pipenv install --dev      
+
+    - name: Lint Project
+      run: |
+        cd starter/backend                
+        pipenv run lint
+
+  test-job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{env.PYTHON_VERSION}}
+
+    - name: Install pipenv
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv --version
+    
+    - name: Cache pipenv
+      uses: actions/cache@v3
+      with:
+        path: |
+          starter/backend/.venv
+          starter/backend/Pipfile.lock
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pipenv-    
+  
+    - name: Install dependencies
+      run: |
+        cd starter/backend
+        pipenv install --dev      
+
+    - name: Test Project
+      run: |
+        cd starter/backend                
+        pipenv run test
+
+  build-and-deploy-job:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{env.PYTHON_VERSION}}
+
+    - name: Install pipenv
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv --version
+    
+    - name: Cache pipenv
+      uses: actions/cache@v3
+      with:
+        path: |
+          starter/backend/.venv
+          starter/backend/Pipfile.lock
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pipenv-    
+  
+    - name: Install dependencies
+      run: |
+        cd starter/backend
+        pipenv install --dev      
+
+    - name: Build Project
+      run: |
+        cd starter/backend                
+        pipenv run test
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}        
+        aws-region: us-east-1
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push docker image to Amazon ECR
+      id: ecr
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REPOSITORY: backend
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        IMAGE_URL=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+        echo "Building image:$IMAGE_URL"
+        cd starter/backend
+        docker build -t $IMAGE_URL .          
+        docker push $IMAGE_URL        
+        echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+    
+    - name: Install kustomize
+      run: |
+        curl -LO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz"
+        tar -xzf kustomize_v5.0.3_linux_amd64.tar.gz
+        sudo mv kustomize /usr/local/bin/
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+    - name: Deploy to Kubernetes
+      run: |        
+        cd starter/backend/k8s
+        IMAGE_URL=${{env.image_url}}        
+        echo "Setting Image $IMAGE_URL"
+        kustomize edit set image backend=$IMAGE_URL
+        kustomize build | kubectl apply -f -     
