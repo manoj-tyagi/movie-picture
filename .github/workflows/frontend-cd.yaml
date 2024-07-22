@@ -166,7 +166,7 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        echo " Outputs:${{needs.build-and-push-job.outputs}}"
+        echo " Outputs:${{fromJSON(needs.build-and-push-job.outputs)}}"
         IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
         echo "Deploying image $IMAGE_URL"
         cd starter/frontend/k8s
