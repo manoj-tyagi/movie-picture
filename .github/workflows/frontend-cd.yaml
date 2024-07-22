@@ -136,8 +136,8 @@ jobs:
         echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
 
     - name: Set output
-        id: set_output
-        run: echo "image_url=${{ env.IMAGE_URL }}" >> $GITHUB_OUTPUT
+      id: set_output
+      run: echo "image_url=${{ env.IMAGE_URL }}" >> $GITHUB_OUTPUT
 
   deploy-job:
     needs: [build-and-push-job]
