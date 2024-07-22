@@ -74,13 +74,10 @@ jobs:
         cd starter/frontend        
         npm run test
 
-  build-and-push-job:
+  build-and-deploy-job:
     needs: [lint-job, test-job]
     runs-on: ubuntu-latest
 
-    outputs:
-      image_url: ${{ steps.ecr.outputs.image_url }}
-        
     steps:
     - name: Check out code
       uses: actions/checkout@v3    
@@ -133,23 +130,8 @@ jobs:
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
         docker push $IMAGE_URL        
-        echo "image_url=$(echo -n $IMAGE_URL | base64)" >> $GITHUB_OUTPUT
-           
-  deploy-job:
-    needs: [build-and-push-job]
-    runs-on: ubuntu-latest
+        echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
 
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}        
-        aws-region: us-east-1
-    
     - name: Set up kubectl
       uses: azure/setup-kubectl@v3
       with:
@@ -168,8 +150,8 @@ jobs:
     - name: Deploy to Kubernetes
       run: |        
         cd starter/frontend/k8s
-        ENCRYPTED_IMAGE_URL=${{needs.build-and-push-job.outputs.image_url}}
-        IMAGE_URL=$(echo -n "$ENCRYPTED_IMAGE_URL" | base64 --decode);
+        IMAGE_URL=${{env.image_url}}        
         echo "Setting Image $IMAGE_URL"
         kustomize edit set image frontend=$IMAGE_URL
-        kustomize build | kubectl apply -f -
+        kustomize build | kubectl apply -f -     
+  
