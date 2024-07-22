@@ -150,7 +150,9 @@ jobs:
     
     - name: Install kustomize
       run: |
-        sudo apt-get install -y kustomize
+        curl -LO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz"
+        tar -xzf kustomize_v5.0.3_linux_amd64.tar.gz
+        sudo mv kustomize /usr/local/bin/
 
     - name: Update kubeconfig
       run: |
@@ -158,5 +160,6 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
+        cd starter/frontend/k8s
         kustomize edit set image frontend=${{ secrets.FRONTEND_REPOSITORY_URL }}:latest
         kustomize build | kubectl apply -f -
