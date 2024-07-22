@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-        image_url: ${{ steps.ecr.outputs.image_url }}
+        image_url: ${{ steps.set_output.outputs.image_url }}
         
     steps:
     - name: Check out code
@@ -132,8 +132,12 @@ jobs:
         echo "Building image:$IMAGE_URL"
         cd starter/frontend
         docker build --build-arg=REACT_APP_MOVIE_API_URL=http://backend.default.svc.cluster.local -t $IMAGE_URL .          
-        # docker push $IMAGE_URL
-        echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+        docker push $IMAGE_URL
+        echo "image_url=$IMAGE_URL" >> $GITHUB_ENV
+
+    - name: Set output
+        id: set_output
+        run: echo "image_url=${{ env.IMAGE_URL }}" >> $GITHUB_OUTPUT
 
   deploy-job:
     needs: [build-and-push-job]
